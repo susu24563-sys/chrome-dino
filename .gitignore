@@ -1,0 +1,7 @@
+node_modules/
+.DS_Store
+dist/
+replace_sprites.js
+replace_sprites_colored.js
+replace_sprites_custom.js
+analyze_image.js
