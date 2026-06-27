@@ -2338,12 +2338,13 @@
             this.canvasCtx.save();
             this.canvasCtx.font = '12px "DotGothic16", monospace';
             this.canvasCtx.fillStyle = '#000000';
-            var playerName = (window.Runner && window.Runner.instance && window.Runner.instance.playerName) ? window.Runner.instance.playerName : '台壽同仁';
-            this.canvasCtx.fillText('👤 ' + playerName, 8, 16);
+            var r = (window.Runner && (window.Runner.instance_ || window.Runner.instance));
+            var playerName = (r && r.playerName) ? r.playerName : '台壽同仁';
+            this.canvasCtx.fillText('👤 ' + playerName, 6, 15);
 
-            var ahScore = (window.Runner && window.Runner.instance && window.Runner.instance.ahScore) ? window.Runner.instance.ahScore : 0;
+            var ahScore = (r && r.ahScore) ? r.ahScore : 0;
             this.canvasCtx.fillStyle = '#0055cc';
-            this.canvasCtx.fillText('📄 A&H: ' + ahScore, 8, 32);
+            this.canvasCtx.fillText('📄 A&H: ' + ahScore, 6, 30);
             this.canvasCtx.restore();
 
             return playSound;
