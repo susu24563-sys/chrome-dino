@@ -2334,16 +2334,16 @@
 
             this.drawHighScore();
 
-            // Draw Player Name and A&H Score HUD
+            // Draw Player Name and A&H Score HUD (Mobile-Optimized Vertical Stack)
             this.canvasCtx.save();
-            this.canvasCtx.font = 'bold 13px "Open Sans", sans-serif';
-            this.canvasCtx.fillStyle = '#535353';
-            var playerName = (window.Runner && window.Runner.instance && window.Runner.instance.playerName) ? window.Runner.instance.playerName : '玩家';
-            this.canvasCtx.fillText('👤 ' + playerName, 15, 18);
+            this.canvasCtx.font = '12px "DotGothic16", monospace';
+            this.canvasCtx.fillStyle = '#000000';
+            var playerName = (window.Runner && window.Runner.instance && window.Runner.instance.playerName) ? window.Runner.instance.playerName : '台壽同仁';
+            this.canvasCtx.fillText('👤 ' + playerName, 8, 16);
 
             var ahScore = (window.Runner && window.Runner.instance && window.Runner.instance.ahScore) ? window.Runner.instance.ahScore : 0;
-            this.canvasCtx.fillStyle = '#1a5fb4';
-            this.canvasCtx.fillText('📄 A&H: ' + ahScore, 130, 18);
+            this.canvasCtx.fillStyle = '#0055cc';
+            this.canvasCtx.fillText('📄 A&H: ' + ahScore, 8, 32);
             this.canvasCtx.restore();
 
             return playSound;
