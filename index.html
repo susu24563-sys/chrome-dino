@@ -11,9 +11,21 @@
 </head>
 
 <body id="t" class="offline">
+    <div id="achievementBanner" class="achievement-banner hidden">
+        <div class="achievement-icon">🏆</div>
+        <div class="achievement-text">
+            <div class="achievement-title">恭喜解鎖成就！</div>
+            <div id="achievementName" class="achievement-name">銀獎</div>
+        </div>
+    </div>
+
     <div id="messageBox" class="sendmessage">
-         <h1 style="text-align: center;font-family: 'Open Sans', sans-serif;">Press Space to start</h1>
-         <div class="niokbutton" onclick="okbuttonsend()"></div>
+         <h2 style="text-align: center; font-family: 'Open Sans', sans-serif; margin-top: 0; margin-bottom: 12px; color: #333;">🦘 澳洲袋鼠冒險記 🦘</h2>
+         <div style="margin-bottom: 15px;">
+             <input type="text" id="playerNameInput" placeholder="請輸入玩家姓名" style="padding: 10px 15px; font-size: 16px; border-radius: 20px; border: 2px solid #535353; width: 80%; max-width: 220px; text-align: center; outline: none; font-family: 'Open Sans', sans-serif;">
+         </div>
+         <p style="text-align: center; font-family: 'Open Sans', sans-serif; font-size: 13px; color: #666; margin-bottom: 15px;">按下 Space / 跳躍鍵 或點擊下方按鈕開始</p>
+         <button class="niokbutton" onclick="okbuttonsend()" style="padding: 8px 24px; font-size: 16px; border-radius: 20px; background: #535353; color: white; border: none; cursor: pointer; font-family: 'Open Sans', sans-serif; font-weight: bold;">開始遊戲</button>
     </div>
     <div id="main-frame-error" class="interstitial-wrapper">
         <div id="main-content">

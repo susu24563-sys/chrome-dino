@@ -54,6 +54,12 @@
 
         this.playCount = 0;
 
+        // Custom Game Features
+        this.ahScore = 0;
+        this.playerName = '玩家';
+        this.floatingTexts = [];
+        this.unlockedAchievements = { silver: false, gold: false, platinum: false, diamond: false };
+
         // Sound FX.
         this.audioBuffer = null;
         this.soundFx = {};
@@ -72,6 +78,22 @@
         }
     }
     window['Runner'] = Runner;
+
+    window.okbuttonsend = function () {
+        var input = document.getElementById('playerNameInput');
+        if (input && input.value.trim() !== '') {
+            if (Runner.instance) {
+                Runner.instance.playerName = input.value.trim();
+            }
+        }
+        var box = document.getElementById("messageBox");
+        if (box) {
+            box.style.visibility = "hidden";
+        }
+        if (Runner.instance && !Runner.instance.playing && !Runner.instance.crashed) {
+            Runner.instance.playIntro();
+        }
+    };
 
 
     /**
@@ -580,6 +602,52 @@
                     this.playSound(this.soundFx.SCORE);
                 }
 
+                // Check policy item collision
+                if (this.horizon.policyItems) {
+                    for (var p = this.horizon.policyItems.length - 1; p >= 0; p--) {
+                        var policy = this.horizon.policyItems[p];
+                        if (!policy.collected) {
+                            var pBox = new CollisionBox(policy.xPos, policy.yPos, policy.width, policy.height);
+                            var tBox = new CollisionBox(this.tRex.xPos, this.tRex.yPos, this.tRex.config.WIDTH, this.tRex.config.HEIGHT);
+                            if (boxCompare(tBox, pBox)) {
+                                policy.collected = true;
+                                policy.remove = true;
+                                this.ahScore += 2000;
+                                this.playSound(this.soundFx.SCORE);
+                                this.floatingTexts.push({
+                                    text: '+2000 A&H',
+                                    x: policy.xPos,
+                                    y: policy.yPos,
+                                    alpha: 1.0
+                                });
+                            }
+                        }
+                    }
+                }
+
+                // Update & draw floating texts
+                if (this.floatingTexts) {
+                    for (var f = this.floatingTexts.length - 1; f >= 0; f--) {
+                        var ft = this.floatingTexts[f];
+                        this.canvasCtx.save();
+                        this.canvasCtx.globalAlpha = ft.alpha;
+                        this.canvasCtx.font = 'bold 14px "Open Sans", sans-serif';
+                        this.canvasCtx.fillStyle = '#e5a50a';
+                        this.canvasCtx.fillText(ft.text, ft.x, ft.y);
+                        this.canvasCtx.restore();
+
+                        ft.y -= 1;
+                        ft.alpha -= 0.03;
+                        if (ft.alpha <= 0) {
+                            this.floatingTexts.splice(f, 1);
+                        }
+                    }
+                }
+
+                // Check achievements
+                var currentActualDist = this.distanceMeter.getActualDistance(Math.ceil(this.distanceRan));
+                this.checkAchievements(currentActualDist);
+
                 // Night mode.
                 if (this.invertTimer > this.config.INVERT_FADE_DURATION) {
                     this.invertTimer = 0;
@@ -607,6 +675,40 @@
                 this.tRex.blinkCount < Runner.config.MAX_BLINK_COUNT)) {
                 this.tRex.update(deltaTime);
                 this.scheduleNextUpdate();
+            }
+        },
+
+        checkAchievements: function (actualDistance) {
+            if (!this.unlockedAchievements) {
+                this.unlockedAchievements = { silver: false, gold: false, platinum: false, diamond: false };
+            }
+            var tiers = [
+                { key: 'silver', dist: 500, name: '銀獎' },
+                { key: 'gold', dist: 1000, name: '金獎' },
+                { key: 'platinum', dist: 2000, name: '白金獎' },
+                { key: 'diamond', dist: 3500, name: '鑽石獎' }
+            ];
+
+            for (var i = 0; i < tiers.length; i++) {
+                var t = tiers[i];
+                if (actualDistance >= t.dist && !this.unlockedAchievements[t.key]) {
+                    this.unlockedAchievements[t.key] = true;
+                    this.showAchievementBanner(t.name);
+                    this.playSound(this.soundFx.SCORE);
+                }
+            }
+        },
+
+        showAchievementBanner: function (name) {
+            var banner = document.getElementById('achievementBanner');
+            var nameEl = document.getElementById('achievementName');
+            if (banner && nameEl) {
+                nameEl.textContent = name;
+                banner.classList.remove('hidden');
+                if (this.achievementTimer) clearTimeout(this.achievementTimer);
+                this.achievementTimer = setTimeout(function () {
+                    banner.classList.add('hidden');
+                }, 3500);
             }
         },
 
@@ -830,6 +932,9 @@
                 this.playing = true;
                 this.crashed = false;
                 this.distanceRan = 0;
+                this.ahScore = 0;
+                this.floatingTexts = [];
+                this.unlockedAchievements = { silver: false, gold: false, platinum: false, diamond: false };
                 this.setSpeed(this.config.SPEED);
                 this.time = getTimeStamp();
                 this.containerEl.classList.remove(Runner.classes.CRASHED);
@@ -1267,6 +1372,130 @@
     //******************************************************************************
 
     /**
+     * Draw Wollemi Pine tree obstacle.
+     */
+    function drawWollemiPine(ctx, x, y, width, height, tier, size) {
+        ctx.save();
+        var styles = {
+            silver:   { trunk: '#505a69', needles: '#c0c0c0', highlight: '#ffffff' },
+            gold:     { trunk: '#8c6200', needles: '#ffd700', highlight: '#fffab3' },
+            platinum: { trunk: '#3d5266', needles: '#e5e4e2', highlight: '#e0ffff' },
+            diamond:  { trunk: '#1a365d', needles: '#00ffff', highlight: '#ffffff' }
+        };
+        var style = styles[tier] || styles.silver;
+        var numTrees = size || 1;
+        var singleW = width / numTrees;
+
+        for (var t = 0; t < numTrees; t++) {
+            var tx = x + t * singleW;
+            var tw = singleW;
+            var th = height;
+            var ty = y;
+
+            // Trunk
+            var trunkW = Math.max(4, tw * 0.18);
+            var trunkX = tx + (tw - trunkW) / 2;
+            ctx.fillStyle = style.trunk;
+            ctx.fillRect(trunkX, ty + th * 0.4, trunkW, th * 0.6);
+
+            // Pagoda layers
+            var layers = 4;
+            for (var i = 0; i < layers; i++) {
+                var layerY = ty + (i * (th * 0.22));
+                var layerH = th * 0.45;
+                var layerW = tw * (0.45 + (i * 0.16));
+                var layerX = tx + (tw - layerW) / 2;
+
+                ctx.beginPath();
+                ctx.moveTo(tx + tw / 2, layerY);
+                ctx.lineTo(layerX + layerW, layerY + layerH);
+                ctx.lineTo(layerX, layerY + layerH);
+                ctx.closePath();
+
+                ctx.fillStyle = style.needles;
+                ctx.fill();
+
+                // Highlight
+                ctx.beginPath();
+                ctx.moveTo(tx + tw / 2, layerY);
+                ctx.lineTo(tx + tw / 2, layerY + layerH);
+                ctx.lineTo(layerX, layerY + layerH);
+                ctx.closePath();
+                ctx.fillStyle = style.highlight;
+                ctx.globalAlpha = 0.35;
+                ctx.fill();
+                ctx.globalAlpha = 1.0;
+            }
+
+            if (tier === 'diamond') {
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(tx + Math.random() * tw, ty + Math.random() * (th * 0.7), 3, 3);
+            }
+        }
+        ctx.restore();
+    }
+
+    /**
+     * Collectible Insurance Policy Item.
+     */
+    function PolicyItem(canvas, dimensions) {
+        this.canvas = canvas;
+        this.canvasCtx = canvas.getContext('2d');
+        this.dimensions = dimensions;
+        this.width = 24;
+        this.height = 30;
+        this.xPos = dimensions.WIDTH + 50;
+        this.yPos = Math.random() > 0.5 ? 105 : 55;
+        this.remove = false;
+        this.collected = false;
+        this.floatTimer = Math.random() * 10;
+    }
+
+    PolicyItem.prototype = {
+        draw: function () {
+            if (this.collected) return;
+            this.canvasCtx.save();
+            var floatY = this.yPos + Math.sin(this.floatTimer) * 4;
+
+            // Policy Document
+            this.canvasCtx.fillStyle = '#ffffff';
+            this.canvasCtx.strokeStyle = '#1a5fb4';
+            this.canvasCtx.lineWidth = 2;
+            this.canvasCtx.fillRect(this.xPos, floatY, this.width, this.height);
+            this.canvasCtx.strokeRect(this.xPos, floatY, this.width, this.height);
+
+            // Header blue bar
+            this.canvasCtx.fillStyle = '#1a5fb4';
+            this.canvasCtx.fillRect(this.xPos + 2, floatY + 2, this.width - 4, 6);
+
+            // Lines representing policy text
+            this.canvasCtx.fillStyle = '#888888';
+            this.canvasCtx.fillRect(this.xPos + 4, floatY + 11, 16, 2);
+            this.canvasCtx.fillRect(this.xPos + 4, floatY + 15, 12, 2);
+            this.canvasCtx.fillRect(this.xPos + 4, floatY + 19, 14, 2);
+
+            // Gold Badge
+            this.canvasCtx.beginPath();
+            this.canvasCtx.arc(this.xPos + this.width - 7, floatY + this.height - 7, 5, 0, Math.PI * 2);
+            this.canvasCtx.fillStyle = '#ffd700';
+            this.canvasCtx.fill();
+            this.canvasCtx.strokeStyle = '#b8860b';
+            this.canvasCtx.lineWidth = 1;
+            this.canvasCtx.stroke();
+
+            this.canvasCtx.restore();
+        },
+        update: function (deltaTime, speed) {
+            this.floatTimer += deltaTime * 0.005;
+            this.xPos -= Math.floor((speed * FPS / 1000) * deltaTime);
+            this.draw();
+            if (this.xPos < -this.width) {
+                this.remove = true;
+            }
+        }
+    };
+
+    /**
      * Obstacle.
      * @param {HTMLCanvasCtx} canvasCtx
      * @param {Obstacle.type} type
@@ -1366,28 +1595,16 @@
              * Draw and crop based on size.
              */
             draw: function () {
-                var sourceWidth = this.typeConfig.width;
-                var sourceHeight = this.typeConfig.height;
-
-                if (IS_HIDPI) {
-                    sourceWidth = sourceWidth * 2;
-                    sourceHeight = sourceHeight * 2;
+                var actualDistance = 0;
+                if (window.Runner && window.Runner.instance && window.Runner.instance.distanceMeter) {
+                    actualDistance = window.Runner.instance.distanceMeter.getActualDistance(Math.ceil(window.Runner.instance.distanceRan));
                 }
+                var tier = 'silver';
+                if (actualDistance >= 2000) tier = 'diamond';
+                else if (actualDistance >= 1000) tier = 'platinum';
+                else if (actualDistance >= 500) tier = 'gold';
 
-                // X position in sprite.
-                var sourceX = (sourceWidth * this.size) * (0.5 * (this.size - 1)) +
-                    this.spritePos.x;
-
-                // Animation frames.
-                if (this.currentFrame > 0) {
-                    sourceX += sourceWidth * this.currentFrame;
-                }
-
-                this.canvasCtx.drawImage(Runner.imageSprite,
-                    sourceX, this.spritePos.y,
-                    sourceWidth * this.size, sourceHeight,
-                    this.xPos, this.yPos,
-                    this.typeConfig.width * this.size, this.typeConfig.height);
+                drawWollemiPine(this.canvasCtx, this.xPos, this.yPos, this.typeConfig.width * this.size, this.typeConfig.height, tier, this.size);
             },
 
             /**
@@ -2084,6 +2301,19 @@
             }
 
             this.drawHighScore();
+
+            // Draw Player Name and A&H Score HUD
+            this.canvasCtx.save();
+            this.canvasCtx.font = 'bold 13px "Open Sans", sans-serif';
+            this.canvasCtx.fillStyle = '#535353';
+            var playerName = (window.Runner && window.Runner.instance && window.Runner.instance.playerName) ? window.Runner.instance.playerName : '玩家';
+            this.canvasCtx.fillText('👤 ' + playerName, 15, 18);
+
+            var ahScore = (window.Runner && window.Runner.instance && window.Runner.instance.ahScore) ? window.Runner.instance.ahScore : 0;
+            this.canvasCtx.fillStyle = '#1a5fb4';
+            this.canvasCtx.fillText('📄 A&H: ' + ahScore, 130, 18);
+            this.canvasCtx.restore();
+
             return playSound;
         },
 
@@ -2574,6 +2804,16 @@
             this.nightMode.update(showNightMode);
             this.updateClouds(deltaTime, currentSpeed);
 
+            if (!this.policyItems) this.policyItems = [];
+            if (!this.policyTimer) this.policyTimer = 0;
+            this.policyTimer += deltaTime;
+            if (this.policyTimer > 4000 + Math.random() * 5000) {
+                this.policyTimer = 0;
+                if (updateObstacles) {
+                    this.policyItems.push(new PolicyItem(this.canvas, this.dimensions));
+                }
+            }
+
             if (updateObstacles) {
                 this.updateObstacles(deltaTime, currentSpeed);
             }
@@ -2700,6 +2940,8 @@
          */
         reset: function () {
             this.obstacles = [];
+            this.policyItems = [];
+            this.policyTimer = 0;
             this.horizonLine.reset();
             this.nightMode.reset();
         },

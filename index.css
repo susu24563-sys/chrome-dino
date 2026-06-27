@@ -171,6 +171,102 @@ body.inverted {
 body.inverted .runner-canvas {
   filter: invert(100%);
 }
-body.inverted #messageBox h1 {
+body.inverted #messageBox h1, body.inverted #messageBox h2 {
   color: #f1f3f4;
 }
+
+/* Start Screen Modal Box */
+#messageBox.sendmessage {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.96);
+  padding: 30px 25px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  z-index: 9999;
+  text-align: center;
+  width: 85%;
+  max-width: 340px;
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+body.inverted #messageBox.sendmessage {
+  background: rgba(32, 33, 36, 0.96);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+}
+
+body.inverted #messageBox h2 {
+  color: #ffffff !important;
+}
+body.inverted #messageBox p {
+  color: #aaa !important;
+}
+
+/* Achievement Notification Banner */
+.achievement-banner {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #1e1e24 0%, #2b2d42 100%);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 30px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(255, 215, 0, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 10000;
+  border: 2px solid #ffd700;
+  animation: slideDownFade 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.achievement-banner.hidden {
+  display: none !important;
+}
+
+.achievement-icon {
+  font-size: 28px;
+  animation: pulse 1s infinite alternate;
+}
+
+.achievement-text {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.achievement-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #ffd700;
+  font-weight: bold;
+}
+
+.achievement-name {
+  font-size: 18px;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+@keyframes slideDownFade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -30px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+  }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.2); }
+}
+
