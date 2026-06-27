@@ -44,6 +44,7 @@ html, body {
   position: absolute;
   top: 35px;
   width: 44px;
+  transition: width 1000ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .offline .runner-canvas {
@@ -222,6 +223,7 @@ body.inverted #messageBox p {
   gap: 12px;
   z-index: 10000;
   border: 2px solid #ffd700;
+  font-family: 'DotGothic16', 'Press Start 2P', sans-serif;
   animation: slideDownFade 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
 }
 
@@ -268,5 +270,236 @@ body.inverted #messageBox p {
 @keyframes pulse {
   0% { transform: scale(1); }
   100% { transform: scale(1.2); }
+}
+
+/* Platinum Sparkle Animation */
+.achievement-banner.platinum-shine {
+  border-color: #e0ffff !important;
+  box-shadow: 0 8px 25px rgba(0, 255, 255, 0.5), 0 0 20px rgba(255, 255, 255, 0.8) !important;
+  background: linear-gradient(135deg, #2b3a4a 0%, #4a6572 100%) !important;
+  animation: slideDownFade 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, platinumFlash 1s infinite alternate !important;
+}
+
+@keyframes platinumFlash {
+  0% { box-shadow: 0 8px 25px rgba(0, 255, 255, 0.4), 0 0 15px rgba(255, 255, 255, 0.6); }
+  100% { box-shadow: 0 8px 35px rgba(0, 255, 255, 0.9), 0 0 30px rgba(255, 255, 255, 1); }
+}
+
+/* Diamond Sparkle Animation */
+.achievement-banner.diamond-shine {
+  border-color: #00ffff !important;
+  box-shadow: 0 8px 30px rgba(0, 255, 255, 0.8), 0 0 25px rgba(255, 215, 0, 0.8) !important;
+  background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%) !important;
+  animation: slideDownFade 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, diamondFlash 0.8s infinite alternate !important;
+}
+
+@keyframes diamondFlash {
+  0% { transform: translate(-50%, 0) scale(1); box-shadow: 0 8px 30px rgba(0, 255, 255, 0.6); }
+  100% { transform: translate(-50%, 0) scale(1.05); box-shadow: 0 10px 40px rgba(0, 255, 255, 1), 0 0 35px rgba(255, 215, 0, 1); }
+}
+
+/* 8-Bit Retro Arcade Start Modal Styling */
+.start-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  font-family: 'Press Start 2P', monospace, 'Courier New', sans-serif;
+}
+
+.start-modal-overlay.hidden {
+  display: none !important;
+}
+
+/* 8-Bit B&W GBA Pokémon Emerald Style Start Modal Styling */
+.start-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  font-family: 'DotGothic16', 'Press Start 2P', monospace, sans-serif;
+}
+
+.start-modal-overlay.hidden {
+  display: none !important;
+}
+
+/* GBA Double Pixel Box Container */
+.pixel-box {
+  background: #ffffff;
+  width: 92%;
+  max-width: 540px;
+  border: 6px solid #000000;
+  box-shadow: 
+    0 0 0 4px #ffffff,
+    0 0 0 10px #000000,
+    10px 10px 0px 10px rgba(0, 0, 0, 0.4);
+  margin: 14px;
+  overflow: hidden;
+  animation: pixelPop 0.25s steps(4);
+  color: #000000;
+}
+
+@keyframes pixelPop {
+  0% { opacity: 0; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.pixel-header {
+  background: #000000;
+  color: #ffffff;
+  padding: 18px 16px;
+  text-align: center;
+  border-bottom: 4px solid #000000;
+}
+
+.pixel-text-title {
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #ffffff;
+}
+
+.pixel-text-sub {
+  font-size: 12px;
+  margin-top: 8px;
+  color: #cccccc;
+}
+
+.pixel-body {
+  padding: 20px;
+  background: #ffffff;
+}
+
+.input-group {
+  margin-bottom: 20px;
+}
+
+.pixel-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #000000;
+}
+
+.pixel-input {
+  width: 100%;
+  padding: 12px;
+  font-size: 14px;
+  font-family: inherit;
+  background: #ffffff;
+  color: #000000;
+  border: 3px solid #000000;
+  outline: none;
+  box-sizing: border-box;
+  box-shadow: inset 2px 2px 0px #eee;
+}
+
+.pixel-input:focus {
+  background: #f0f0f0;
+  border-color: #000000;
+}
+
+.pixel-rules {
+  background: #f9f9f9;
+  border: 3px solid #000000;
+  padding: 14px;
+}
+
+.pixel-rules-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: #000000;
+  margin-bottom: 8px;
+}
+
+.pixel-tip {
+  font-size: 12px;
+  color: #444444;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+.tier-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.pixel-card {
+  background: #ffffff;
+  padding: 10px;
+  border: 2px solid #000000;
+  box-shadow: 3px 3px 0px #000000;
+}
+
+.pixel-card.silver { background: #ffffff; }
+.pixel-card.gold { background: #f0f0f0; }
+.pixel-card.platinum { background: #e8e8e8; }
+.pixel-card.diamond { background: #dfdfdf; }
+
+.tier-name {
+  font-size: 13px;
+  font-weight: bold;
+  color: #000000;
+  margin-bottom: 6px;
+}
+
+.tier-desc {
+  font-size: 11px;
+  color: #222222;
+  line-height: 1.5;
+  font-family: monospace;
+}
+
+.pixel-footer {
+  padding: 16px 20px 24px 20px;
+  background: #ffffff;
+  text-align: center;
+}
+
+.pixel-btn {
+  width: 100%;
+  background: #000000;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 900;
+  font-family: inherit;
+  border: 4px solid #000000;
+  padding: 14px;
+  cursor: pointer;
+  box-shadow: 4px 4px 0px #777777;
+  animation: btnBlink 1.2s infinite alternate;
+}
+
+@keyframes btnBlink {
+  0% { background: #000000; color: #ffffff; }
+  100% { background: #333333; color: #ffffff; }
+}
+
+.pixel-btn:hover {
+  background: #ffffff;
+  color: #000000;
+  box-shadow: 4px 4px 0px #000000;
+}
+
+.pixel-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0px #000000;
 }
 

@@ -17,6 +17,7 @@
             return Runner.instance_;
         }
         Runner.instance_ = this;
+        Runner.instance = this;
 
         this.outerContainerEl = document.querySelector(outerContainerId);
         this.containerEl = null;
@@ -79,22 +80,6 @@
     }
     window['Runner'] = Runner;
 
-    window.okbuttonsend = function () {
-        var input = document.getElementById('playerNameInput');
-        if (input && input.value.trim() !== '') {
-            if (Runner.instance) {
-                Runner.instance.playerName = input.value.trim();
-            }
-        }
-        var box = document.getElementById("messageBox");
-        if (box) {
-            box.style.visibility = "hidden";
-        }
-        if (Runner.instance && !Runner.instance.playing && !Runner.instance.crashed) {
-            Runner.instance.playIntro();
-        }
-    };
-
 
     /**
      * Default game width.
@@ -134,17 +119,17 @@
         GAP_COEFFICIENT: 0.6,
         GRAVITY: 0.6,
         INITIAL_JUMP_VELOCITY: 12,
-        INVERT_FADE_DURATION: 12000,
-        INVERT_DISTANCE: 700,
+        INVERT_FADE_DURATION: 7500,
+        INVERT_DISTANCE: 480000,
         MAX_BLINK_COUNT: 3,
         MAX_CLOUDS: 6,
         MAX_OBSTACLE_LENGTH: 3,
         MAX_OBSTACLE_DUPLICATION: 2,
-        MAX_SPEED: 13,
+        MAX_SPEED: 8,
         MIN_JUMP_HEIGHT: 35,
         MOBILE_SPEED_COEFFICIENT: 1.2,
         RESOURCE_TEMPLATE_ID: 'audio-resources',
-        SPEED: 6,
+        SPEED: 5,
         SPEED_DROP_COEFFICIENT: 3,
         ARCADE_MODE_INITIAL_TOP_POSITION: 35,
         ARCADE_MODE_TOP_POSITION_PERCENT: 0.1
@@ -332,24 +317,35 @@
          * Load and decode base 64 encoded sounds.
          */
         loadSounds: function () {
-            if (!IS_IOS) {
-                this.audioContext = new AudioContext();
-
-                var resourceTemplate =
-                    document.getElementById(this.config.RESOURCE_TEMPLATE_ID).content;
-
-                for (var sound in Runner.sounds) {
-                    var soundSrc =
-                        resourceTemplate.getElementById(Runner.sounds[sound]).src;
-                    soundSrc = soundSrc.substr(soundSrc.indexOf(',') + 1);
-                    var buffer = decodeBase64ToArrayBuffer(soundSrc);
-
-                    // Async, so no guarantee of order in array.
-                    this.audioContext.decodeAudioData(buffer, function (index, audioData) {
-                        this.soundFx[index] = audioData;
-                    }.bind(this, sound));
+            if (this.audioLoaded) return;
+            this.audioLoaded = true;
+            try {
+                if (!IS_IOS && window.AudioContext) {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    var templateEl = document.getElementById(this.config.RESOURCE_TEMPLATE_ID);
+                    if (templateEl) {
+                        var resourceTemplate = templateEl.content || templateEl;
+                        for (var sound in Runner.sounds) {
+                            try {
+                                var soundEl = resourceTemplate.querySelector ? resourceTemplate.querySelector('#' + Runner.sounds[sound]) : document.getElementById(Runner.sounds[sound]);
+                                if (soundEl && soundEl.src) {
+                                    var soundSrc = soundEl.src;
+                                    var commaIndex = soundSrc.indexOf(',');
+                                    if (commaIndex !== -1) {
+                                        soundSrc = soundSrc.substr(commaIndex + 1);
+                                        var buffer = decodeBase64ToArrayBuffer(soundSrc);
+                                        if (buffer && buffer.byteLength > 0) {
+                                            this.audioContext.decodeAudioData(buffer, function (index, audioData) {
+                                                this.soundFx[index] = audioData;
+                                            }.bind(this, sound), function(err) {});
+                                        }
+                                    }
+                                }
+                            } catch (e) {}
+                        }
+                    }
                 }
-            }
+            } catch (e) {}
         },
 
         /**
@@ -490,30 +486,18 @@
             if (!this.activated && !this.crashed) {
                 this.playingIntro = true;
                 this.tRex.playingIntro = true;
-
-                // CSS animation definition.
-                var keyframes = '@-webkit-keyframes intro { ' +
-                    'from { width:' + Trex.config.WIDTH + 'px }' +
-                    'to { width: ' + this.dimensions.WIDTH + 'px }' +
-                    '}';
-                
-                // create a style sheet to put the keyframe rule in 
-                // and then place the style sheet in the html head    
-                var sheet = document.createElement('style');
-                sheet.innerHTML = keyframes;
-                document.head.appendChild(sheet);
-
-                this.containerEl.addEventListener(Runner.events.ANIM_END,
-                    this.startGame.bind(this));
-
-                this.containerEl.style.webkitAnimation = 'intro .4s ease-out 1 both';
+                if (window.Trex && window.Trex.status) {
+                    this.tRex.status = window.Trex.status.RUNNING;
+                }
+                this.containerEl.style.transition = 'width 1000ms cubic-bezier(0.4, 0, 0.2, 1)';
                 this.containerEl.style.width = this.dimensions.WIDTH + 'px';
-
-                // if (this.touchController) {
-                //     this.outerContainerEl.appendChild(this.touchController);
-                // }
                 this.playing = true;
                 this.activated = true;
+                this.time = getTimeStamp();
+
+                setTimeout(function() {
+                    this.startGame();
+                }.bind(this), 1000);
             } else if (this.crashed) {
                 this.restart();
             }
@@ -528,6 +512,9 @@
             this.runningTime = 0;
             this.playingIntro = false;
             this.tRex.playingIntro = false;
+            if (window.Trex && window.Trex.status) {
+                this.tRex.status = window.Trex.status.RUNNING;
+            }
             this.containerEl.style.webkitAnimation = '';
             this.playCount++;
 
@@ -556,6 +543,9 @@
             var now = getTimeStamp();
             var deltaTime = now - (this.time || now);
             this.time = now;
+            if (deltaTime > 500) {
+                deltaTime = 0;
+            }
 
             if (this.playing) {
                 this.clearCanvas();
@@ -586,7 +576,7 @@
                     checkForCollision(this.horizon.obstacles[0], this.tRex);
 
                 if (!collision) {
-                    this.distanceRan += this.currentSpeed * deltaTime / this.msPerFrame;
+                    this.distanceRan += 32000 * (deltaTime / 1000);
 
                     if (this.currentSpeed < this.config.MAX_SPEED) {
                         this.currentSpeed += this.config.ACCELERATION;
@@ -612,10 +602,10 @@
                             if (boxCompare(tBox, pBox)) {
                                 policy.collected = true;
                                 policy.remove = true;
-                                this.ahScore += 2000;
+                                this.ahScore += 12000;
                                 this.playSound(this.soundFx.SCORE);
                                 this.floatingTexts.push({
-                                    text: '+2000 A&H',
+                                    text: '+12000 A&H',
                                     x: policy.xPos,
                                     y: policy.yPos,
                                     alpha: 1.0
@@ -660,12 +650,15 @@
                         this.distanceMeter.getActualDistance(Math.ceil(this.distanceRan));
 
                     if (actualDistance > 0) {
-                        this.invertTrigger = !(actualDistance %
-                            this.config.INVERT_DISTANCE);
-
-                        if (this.invertTrigger && this.invertTimer === 0) {
-                            this.invertTimer += deltaTime;
-                            this.invert();
+                        var currentSegment = Math.floor(actualDistance / this.config.INVERT_DISTANCE);
+                        if (!this.lastInvertSegment) this.lastInvertSegment = 0;
+                        if (currentSegment > this.lastInvertSegment) {
+                            this.lastInvertSegment = currentSegment;
+                            this.invertTrigger = true;
+                            if (this.invertTimer === 0) {
+                                this.invertTimer += deltaTime;
+                                this.invert();
+                            }
                         }
                     }
                 }
@@ -682,33 +675,54 @@
             if (!this.unlockedAchievements) {
                 this.unlockedAchievements = { silver: false, gold: false, platinum: false, diamond: false };
             }
+            var ah = this.ahScore || 0;
+            var dist = actualDistance || 0;
             var tiers = [
-                { key: 'silver', dist: 500, name: '銀獎' },
-                { key: 'gold', dist: 1000, name: '金獎' },
-                { key: 'platinum', dist: 2000, name: '白金獎' },
-                { key: 'diamond', dist: 3500, name: '鑽石獎' }
+                { key: 'silver',   ah: 48000,  dist: 480000,  name: '銀獎' },
+                { key: 'gold',     ah: 60000,  dist: 600000,  name: '金獎' },
+                { key: 'platinum', ah: 120000, dist: 1200000, name: '白金獎' },
+                { key: 'diamond',  ah: 180000, dist: 1800000, name: '鑽石獎' }
             ];
 
             for (var i = 0; i < tiers.length; i++) {
                 var t = tiers[i];
-                if (actualDistance >= t.dist && !this.unlockedAchievements[t.key]) {
+                var isUnlocked = (ah >= t.ah && dist >= t.dist);
+                if (isUnlocked && !this.unlockedAchievements[t.key]) {
                     this.unlockedAchievements[t.key] = true;
-                    this.showAchievementBanner(t.name);
+                    this.showAchievementBanner(t.name, t.key);
                     this.playSound(this.soundFx.SCORE);
                 }
             }
         },
 
-        showAchievementBanner: function (name) {
+        showAchievementBanner: function (name, key) {
             var banner = document.getElementById('achievementBanner');
             var nameEl = document.getElementById('achievementName');
+            var pName = this.playerName || '台壽同仁';
             if (banner && nameEl) {
-                nameEl.textContent = name;
+                if (key === 'diamond') {
+                    nameEl.textContent = '恭喜 ' + pName + ' 達成鑽石獎 - 台中第二區域中心高峰競賽達成!!';
+                    banner.classList.add('diamond-shine');
+                    banner.classList.remove('platinum-shine');
+                } else if (key === 'platinum' || name.indexOf('白金') !== -1) {
+                    nameEl.textContent = '恭喜 ' + pName + ' 達成白金獎 ✨';
+                    banner.classList.add('platinum-shine');
+                    banner.classList.remove('diamond-shine');
+                } else if (key === 'gold') {
+                    nameEl.textContent = '恭喜 ' + pName + ' 達成金獎';
+                    banner.classList.remove('platinum-shine');
+                    banner.classList.remove('diamond-shine');
+                } else {
+                    nameEl.textContent = '恭喜 ' + pName + ' 達成銀獎';
+                    banner.classList.remove('platinum-shine');
+                    banner.classList.remove('diamond-shine');
+                }
                 banner.classList.remove('hidden');
                 if (this.achievementTimer) clearTimeout(this.achievementTimer);
+                var duration = key === 'diamond' ? 6000 : 3500;
                 this.achievementTimer = setTimeout(function () {
                     banner.classList.add('hidden');
-                }, 3500);
+                }, duration);
             }
         },
 
@@ -774,51 +788,37 @@
          * @param {Event} e
          */
         onKeyDown: function (e) {
-            // Prevent native page scrolling whilst tapping on mobile.
-            if (IS_MOBILE && this.playing) {
-                e.preventDefault();
-            }
-
-            // Handle input field events for player name input
-            if (e.target && e.target.id === 'playerNameInput') {
-                if (e.keyCode === 13) { // Enter key
-                    window.okbuttonsend();
-                    e.target.blur();
-                }
+            var startModal = document.getElementById('startModal');
+            if (startModal && !startModal.classList.contains('hidden')) {
                 return;
             }
 
-            if (e.target != this.detailsButton) {
-                if (!this.crashed && (Runner.keycodes.JUMP[e.keyCode] ||
-                    e.type == Runner.events.TOUCHSTART)) {
-                    
-                    // Capture player name and hide modal box if active
-                    var input = document.getElementById('playerNameInput');
-                    if (input && input.value.trim() !== '') {
-                        this.playerName = input.value.trim();
-                    }
-                    var box = document.getElementById("messageBox");
-                    if (box && box.style.visibility !== "hidden") {
-                        box.style.visibility = "hidden";
-                    }
+            console.log("[Dino Debug] Key down event triggered!", "keyCode:", e.keyCode, "code:", e.code, "key:", e.key);
 
+            // Prevent native page scrolling whilst tapping or jumping.
+            var isJump = (e.keyCode == 32 || e.keyCode == 38 || e.code === 'Space' || e.code === 'ArrowUp' || (Runner.keycodes.JUMP && Runner.keycodes.JUMP[e.keyCode]));
+            if (isJump && (this.playing || e.target == document.body)) {
+                e.preventDefault();
+            }
+
+            if (e.target != this.detailsButton) {
+                if (!this.crashed && (isJump || e.type == Runner.events.TOUCHSTART || e.type == Runner.events.MOUSEDOWN)) {
                     if (!this.playing) {
                         this.loadSounds();
-                        this.playing = true;
+                        this.playIntro();
                         this.update();
                         if (window.errorPageController) {
                             errorPageController.trackEasterEgg();
                         }
                     }
-                    //  Play sound effect and jump on starting the game for the first time.
-                    if (!this.tRex.jumping && !this.tRex.ducking) {
+                    // Play sound effect and jump on starting the game.
+                    if (this.tRex && !this.tRex.jumping && !this.tRex.ducking) {
                         this.playSound(this.soundFx.BUTTON_PRESS);
                         this.tRex.startJump(this.currentSpeed);
                     }
                 }
 
-                if (this.crashed && e.type == Runner.events.TOUCHSTART &&
-                    e.currentTarget == this.containerEl) {
+                if (this.crashed && (e.type == Runner.events.TOUCHSTART || e.type == Runner.events.MOUSEDOWN || e.currentTarget == this.containerEl)) {
                     this.restart();
                 }
             }
@@ -842,7 +842,7 @@
          */
         onKeyUp: function (e) {
             var keyCode = String(e.keyCode);
-            var isjumpKey = Runner.keycodes.JUMP[keyCode] ||
+            var isjumpKey = (e.keyCode == 32 || e.keyCode == 38 || e.code === 'Space' || e.code === 'ArrowUp' || (Runner.keycodes.JUMP && Runner.keycodes.JUMP[keyCode])) ||
                 e.type == Runner.events.TOUCHEND ||
                 e.type == Runner.events.MOUSEDOWN;
 
@@ -1133,15 +1133,21 @@
      * @param {string} base64String
      */
     function decodeBase64ToArrayBuffer(base64String) {
-        var len = (base64String.length / 4) * 3;
-        var str = atob(base64String);
-        var arrayBuffer = new ArrayBuffer(len);
-        var bytes = new Uint8Array(arrayBuffer);
+        try {
+            var cleanString = base64String.replace(/[\s\r\n]/g, '');
+            var str = atob(cleanString);
+            var len = str.length;
+            var arrayBuffer = new ArrayBuffer(len);
+            var bytes = new Uint8Array(arrayBuffer);
 
-        for (var i = 0; i < len; i++) {
-            bytes[i] = str.charCodeAt(i);
+            for (var i = 0; i < len; i++) {
+                bytes[i] = str.charCodeAt(i);
+            }
+            return bytes.buffer;
+        } catch (e) {
+            console.warn("Base64 decoding failed:", e);
+            return new ArrayBuffer(0);
         }
-        return bytes.buffer;
     }
 
 
@@ -1458,14 +1464,14 @@
     /**
      * Collectible Insurance Policy Item.
      */
-    function PolicyItem(canvas, dimensions) {
+    function PolicyItem(canvas, dimensions, opt_xPos) {
         this.canvas = canvas;
         this.canvasCtx = canvas.getContext('2d');
         this.dimensions = dimensions;
         this.width = 24;
         this.height = 30;
-        this.xPos = dimensions.WIDTH + 50;
-        this.yPos = Math.random() > 0.5 ? 105 : 55;
+        this.xPos = opt_xPos !== undefined ? opt_xPos : dimensions.WIDTH + 50;
+        this.yPos = 15;
         this.remove = false;
         this.collected = false;
         this.floatTimer = Math.random() * 10;
@@ -1616,13 +1622,19 @@
              */
             draw: function () {
                 var actualDistance = 0;
-                if (window.Runner && window.Runner.instance && window.Runner.instance.distanceMeter) {
-                    actualDistance = window.Runner.instance.distanceMeter.getActualDistance(Math.ceil(window.Runner.instance.distanceRan));
+                var ahScore = 0;
+                var r = window.Runner.instance_ || window.Runner.instance;
+                if (r) {
+                    ahScore = r.ahScore || 0;
+                    if (r.distanceMeter) {
+                        actualDistance = r.distanceMeter.getActualDistance(Math.ceil(r.distanceRan));
+                    }
                 }
                 var tier = 'silver';
-                if (actualDistance >= 2000) tier = 'diamond';
-                else if (actualDistance >= 1000) tier = 'platinum';
-                else if (actualDistance >= 500) tier = 'gold';
+                if (ahScore >= 180000 && actualDistance >= 1800000) tier = 'diamond';
+                else if (ahScore >= 120000 && actualDistance >= 1200000) tier = 'platinum';
+                else if (ahScore >= 60000 && actualDistance >= 600000) tier = 'gold';
+                else if (ahScore >= 48000 && actualDistance >= 480000) tier = 'silver';
 
                 drawWollemiPine(this.canvasCtx, this.xPos, this.yPos, this.typeConfig.width * this.size, this.typeConfig.height, tier, this.size);
             },
@@ -2157,13 +2169,13 @@
      */
     DistanceMeter.config = {
         // Number of digits.
-        MAX_DISTANCE_UNITS: 5,
+        MAX_DISTANCE_UNITS: 8,
 
         // Distance that causes achievement animation.
-        ACHIEVEMENT_DISTANCE: 100,
+        ACHIEVEMENT_DISTANCE: 100000,
 
         // Used for conversion from pixel distance to a scaled unit.
-        COEFFICIENT: 0.025,
+        COEFFICIENT: 1.0,
 
         // Flash duration in milliseconds.
         FLASH_DURATION: 1000 / 4,
@@ -2254,7 +2266,7 @@
          * @return {number} The 'real' distance ran.
          */
         getActualDistance: function (distance) {
-            return distance ? Math.round(distance * this.config.COEFFICIENT) : 0;
+            return distance ? Math.round(distance) : 0;
         },
 
         /**
@@ -2827,10 +2839,18 @@
             if (!this.policyItems) this.policyItems = [];
             if (!this.policyTimer) this.policyTimer = 0;
             this.policyTimer += deltaTime;
-            if (this.policyTimer > 4000 + Math.random() * 5000) {
+            if (this.policyTimer > 35000 + Math.random() * 5000) {
                 this.policyTimer = 0;
-                if (updateObstacles) {
-                    this.policyItems.push(new PolicyItem(this.canvas, this.dimensions));
+                this.shouldSpawnPolicy = true;
+            }
+
+            if (this.policyItems) {
+                for (var i = this.policyItems.length - 1; i >= 0; i--) {
+                    var item = this.policyItems[i];
+                    item.update(deltaTime, currentSpeed);
+                    if (item.remove) {
+                        this.policyItems.splice(i, 1);
+                    }
                 }
             }
 
@@ -2926,10 +2946,18 @@
                 this.addNewObstacle(currentSpeed);
             } else {
                 var obstacleSpritePos = this.spritePos[obstacleType.type];
-
-                this.obstacles.push(new Obstacle(this.canvasCtx, obstacleType,
+                var newObs = new Obstacle(this.canvasCtx, obstacleType,
                     obstacleSpritePos, this.dimensions,
-                    this.gapCoefficient, currentSpeed, obstacleType.width));
+                    this.gapCoefficient, currentSpeed, obstacleType.width);
+                this.obstacles.push(newObs);
+
+                // Spawn PolicyItem directly above this tree obstacle when 5-8 seconds have elapsed!
+                if (!this.policyItems) this.policyItems = [];
+                if (this.shouldSpawnPolicy || this.policyItems.length === 0) {
+                    this.shouldSpawnPolicy = false;
+                    var policyX = newObs.xPos + (newObs.typeConfig.width * newObs.size) / 2 - 12;
+                    this.policyItems.push(new PolicyItem(this.canvas, this.dimensions, policyX));
+                }
 
                 this.obstacleHistory.unshift(obstacleType.type);
 
@@ -2988,7 +3016,44 @@
 
 
 function onDocumentLoad() {
-    new Runner('.interstitial-wrapper');
+    var runner = new Runner('.interstitial-wrapper');
+    
+    var startModal = document.getElementById('startModal');
+    var startGameBtn = document.getElementById('startGameBtn');
+    var playerNameInput = document.getElementById('playerNameInput');
+
+    function handleStart() {
+        if (playerNameInput && playerNameInput.value.trim()) {
+            var r = window.Runner.instance_ || window.Runner.instance || runner;
+            if (r) {
+                r.playerName = playerNameInput.value.trim();
+            }
+        }
+        if (startModal) {
+            startModal.classList.add('hidden');
+        }
+        var inst = window.Runner.instance_ || window.Runner.instance || runner;
+        if (inst && !inst.playing) {
+            inst.loadSounds();
+            inst.playIntro();
+            inst.update();
+            if (inst.tRex && !inst.tRex.jumping && !inst.tRex.ducking) {
+                inst.playSound(inst.soundFx.BUTTON_PRESS);
+                inst.tRex.startJump(inst.currentSpeed);
+            }
+        }
+    }
+
+    if (startGameBtn) {
+        startGameBtn.addEventListener('click', handleStart);
+    }
+    if (playerNameInput) {
+        playerNameInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                handleStart();
+            }
+        });
+    }
 }
 
 document.addEventListener('DOMContentLoaded', onDocumentLoad);
