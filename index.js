@@ -2125,7 +2125,7 @@
         this.image = Runner.imageSprite;
         this.spritePos = spritePos;
         this.x = 0;
-        this.y = 5;
+        this.y = 18;
 
         this.currentDistance = 0;
         this.maxScore = 0;
@@ -2243,10 +2243,9 @@
             this.canvasCtx.save();
 
             if (opt_highScore) {
-                // Left of the current score.
-                var highScoreX = this.x - (this.maxScoreUnits * 2) *
-                    DistanceMeter.dimensions.WIDTH;
-                this.canvasCtx.translate(highScoreX, this.y);
+                // Draw High Score directly above Current Score on the top right
+                var highScoreX = this.x + (this.maxScoreUnits - (this.highScore ? this.highScore.length : 8)) * DistanceMeter.dimensions.DEST_WIDTH;
+                this.canvasCtx.translate(highScoreX, this.y - 14);
             } else {
                 this.canvasCtx.translate(this.x, this.y);
             }
