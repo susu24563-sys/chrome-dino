@@ -779,9 +779,29 @@
                 e.preventDefault();
             }
 
+            // Handle input field events for player name input
+            if (e.target && e.target.id === 'playerNameInput') {
+                if (e.keyCode === 13) { // Enter key
+                    window.okbuttonsend();
+                    e.target.blur();
+                }
+                return;
+            }
+
             if (e.target != this.detailsButton) {
                 if (!this.crashed && (Runner.keycodes.JUMP[e.keyCode] ||
                     e.type == Runner.events.TOUCHSTART)) {
+                    
+                    // Capture player name and hide modal box if active
+                    var input = document.getElementById('playerNameInput');
+                    if (input && input.value.trim() !== '') {
+                        this.playerName = input.value.trim();
+                    }
+                    var box = document.getElementById("messageBox");
+                    if (box && box.style.visibility !== "hidden") {
+                        box.style.visibility = "hidden";
+                    }
+
                     if (!this.playing) {
                         this.loadSounds();
                         this.playing = true;
