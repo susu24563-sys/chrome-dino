@@ -701,7 +701,7 @@
             var pName = this.playerName || '台壽同仁';
             if (banner && nameEl) {
                 if (key === 'diamond') {
-                    nameEl.textContent = '恭喜 ' + pName + ' 達成鑽石獎 - 台中第二區域中心高峰競賽達成!!';
+                    nameEl.textContent = '恭喜 ' + pName + ' 達成鑽石獎 - 台中第二區域中心菁英競賽達成!!';
                     banner.classList.add('diamond-shine');
                     banner.classList.remove('platinum-shine');
                 } else if (key === 'platinum' || name.indexOf('白金') !== -1) {
@@ -946,7 +946,7 @@
 
             var achievement = '未達銀獎門檻';
             if (ah >= 180000 && dist >= 1800000) {
-                achievement = '💎 鑽石獎 (高峰競賽達成!!)';
+                achievement = '💎 鑽石獎 (菁英競賽達成!!)';
             } else if (ah >= 120000 && dist >= 1200000) {
                 achievement = '🏆 白金獎 ✨';
             } else if (ah >= 60000 && dist >= 600000) {
