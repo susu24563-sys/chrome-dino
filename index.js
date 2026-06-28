@@ -789,7 +789,9 @@
          */
         onKeyDown: function (e) {
             var startModal = document.getElementById('startModal');
-            if (startModal && !startModal.classList.contains('hidden')) {
+            var gameOverModal = document.getElementById('gameOverModal');
+            if ((startModal && !startModal.classList.contains('hidden')) || 
+                (gameOverModal && !gameOverModal.classList.contains('hidden'))) {
                 return;
             }
 
@@ -926,6 +928,39 @@
 
             // Reset the time clock.
             this.time = getTimeStamp();
+
+            // Show Game Over Result Modal
+            this.showGameOverModal();
+        },
+
+        showGameOverModal: function () {
+            var modal = document.getElementById('gameOverModal');
+            var resName = document.getElementById('resPlayerName');
+            var resAh = document.getElementById('resAhScore');
+            var resDist = document.getElementById('resDistance');
+            var resAch = document.getElementById('resAchievement');
+
+            var playerName = this.playerName || '台壽同仁';
+            var ah = this.ahScore || 0;
+            var dist = this.distanceMeter ? this.distanceMeter.getActualDistance(Math.ceil(this.distanceRan)) : 0;
+
+            var achievement = '未達銀獎門檻';
+            if (ah >= 180000 && dist >= 1800000) {
+                achievement = '💎 鑽石獎 (高峰競賽達成!!)';
+            } else if (ah >= 120000 && dist >= 1200000) {
+                achievement = '🏆 白金獎 ✨';
+            } else if (ah >= 60000 && dist >= 600000) {
+                achievement = '🥇 金獎';
+            } else if (ah >= 48000 && dist >= 480000) {
+                achievement = '🥈 銀獎';
+            }
+
+            if (resName) resName.textContent = playerName;
+            if (resAh) resAh.textContent = ah.toLocaleString() + ' A&H';
+            if (resDist) resDist.textContent = dist.toLocaleString() + ' 分';
+            if (resAch) resAch.textContent = achievement;
+
+            if (modal) modal.classList.remove('hidden');
         },
 
         stop: function () {
@@ -3053,6 +3088,23 @@ function onDocumentLoad() {
                 handleStart();
             }
         });
+    }
+
+    var gameOverModal = document.getElementById('gameOverModal');
+    var restartGameBtn = document.getElementById('restartGameBtn');
+
+    function handleRestart() {
+        if (gameOverModal) {
+            gameOverModal.classList.add('hidden');
+        }
+        var inst = window.Runner.instance_ || window.Runner.instance || runner;
+        if (inst && inst.crashed) {
+            inst.restart();
+        }
+    }
+
+    if (restartGameBtn) {
+        restartGameBtn.addEventListener('click', handleRestart);
     }
 }
 

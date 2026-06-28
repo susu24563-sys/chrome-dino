@@ -45,8 +45,8 @@
             </div>
             <div class="start-body pixel-body">
                 <div class="input-group">
-                    <label for="playerNameInput" class="pixel-label">▶ 請輸入您的姓名 / 單位：</label>
-                    <input type="text" id="playerNameInput" class="pixel-input" placeholder="例如：張小明 / 台中二區" value="台壽同仁" autocomplete="off" />
+                    <label for="playerNameInput" class="pixel-label">▶ 請輸入您的單位 / 姓名：</label>
+                    <input type="text" id="playerNameInput" class="pixel-input" placeholder="例如：台中二區 / 張小明" value="台壽同仁" autocomplete="off" />
                 </div>
                 <div class="rules-section pixel-rules">
                     <div class="rules-title pixel-rules-title">★ 遊戲規則與高峰競賽門檻（需同時達標）</div>
@@ -73,6 +73,27 @@
             </div>
             <div class="start-footer pixel-footer">
                 <button id="startGameBtn" class="start-btn pixel-btn">Press Start 🎮 開始挑戰</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Over Result Modal Overlay (8-Bit B&W GBA Style) -->
+    <div id="gameOverModal" class="start-modal-overlay hidden">
+        <div class="start-modal-card pixel-box">
+            <div class="start-header pixel-header">
+                <div class="start-title pixel-text-title">🎮 挑戰結果 (GAME OVER)</div>
+                <div class="start-subtitle pixel-text-sub">【台灣人壽高峰競賽 - 台中第二區域中心】</div>
+            </div>
+            <div class="start-body pixel-body">
+                <div class="pixel-rules" style="background: #ffffff; color: #000000; padding: 16px;">
+                    <div class="result-row" style="margin-bottom: 12px; font-size: 14px;"><span class="result-label" style="font-weight: bold;">▶ 參賽單位/姓名：</span><span id="resPlayerName" class="result-val" style="font-weight: bold; color: #0055cc;">台壽同仁</span></div>
+                    <div class="result-row" style="margin-bottom: 12px; font-size: 14px;"><span class="result-label" style="font-weight: bold;">📄 A&H 累計點數：</span><span id="resAhScore" class="result-val" style="font-weight: bold; color: #008800;">0</span></div>
+                    <div class="result-row" style="margin-bottom: 12px; font-size: 14px;"><span class="result-label" style="font-weight: bold;">🏃 跑步總分數：</span><span id="resDistance" class="result-val" style="font-weight: bold; color: #cc0000;">0</span></div>
+                    <div class="result-row" style="font-size: 14px;"><span class="result-label" style="font-weight: bold;">🎖️ 高峰競賽榮譽：</span><span id="resAchievement" class="result-val" style="font-weight: bold; color: #000000;">未達門檻</span></div>
+                </div>
+            </div>
+            <div class="start-footer pixel-footer">
+                <button id="restartGameBtn" class="start-btn pixel-btn">Press Start 🔄 再挑戰一次</button>
             </div>
         </div>
     </div>
